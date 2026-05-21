@@ -1,211 +1,135 @@
 import 'package:flutter/material.dart';
-
 import '../../../theme/app_colors.dart';
+import '../models/inspection_models.dart';
 
-class InspectionItemCard extends StatefulWidget {
-  final String title;
+class InspectionItemCard extends StatelessWidget {
+  final ComponentResult item;
+  final Function(ItemStatus) onStatusChanged;
+  final Function(String) onNotesChanged;
 
-  const InspectionItemCard({super.key, required this.title});
-
-  @override
-  State<InspectionItemCard> createState() => _InspectionItemCardState();
-}
-
-class _InspectionItemCardState extends State<InspectionItemCard> {
-  String selectedStatus = 'PASS';
-
-  final TextEditingController notesController = TextEditingController();
+  const InspectionItemCard({
+    super.key,
+    required this.item,
+    required this.onStatusChanged,
+    required this.onNotesChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
-
       padding: const EdgeInsets.all(24),
-
       decoration: BoxDecoration(
         color: AppColors.card,
-
         borderRadius: BorderRadius.circular(20),
-
-        border: Border.all(color: AppColors.gold.withOpacity(0.25)),
+        border: Border.all(
+          color:
+              item.isRoadworthyRelevant
+                  ? AppColors.warning.withOpacity(0.4)
+                  : AppColors.gold.withOpacity(0.25),
+          width: item.isRoadworthyRelevant ? 1.5 : 1,
+        ),
       ),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-
         children: [
-          /// TITLE
-          Text(
-            widget.title,
-
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                item.title,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (item.isRoadworthyRelevant)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'ROADWORTHY CRITICAL',
+                    style: TextStyle(
+                      color: AppColors.warning,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
           ),
-
           const SizedBox(height: 24),
-
-          /// STATUS BUTTONS
           Row(
             children: [
-              Expanded(
-                child: StatusButton(
-                  title: 'PASS',
-                  selected: selectedStatus == 'PASS',
-
-                  onTap: () {
-                    setState(() {
-                      selectedStatus = 'PASS';
-                    });
-                  },
-                ),
+              _statusButton(
+                'PASS',
+                ItemStatus.pass,
+                item.status == ItemStatus.pass,
               ),
-
               const SizedBox(width: 14),
-
-              Expanded(
-                child: StatusButton(
-                  title: 'ATTENTION',
-                  selected: selectedStatus == 'ATTENTION',
-
-                  onTap: () {
-                    setState(() {
-                      selectedStatus = 'ATTENTION';
-                    });
-                  },
-                ),
+              _statusButton(
+                'ATTENTION',
+                ItemStatus.attention,
+                item.status == ItemStatus.attention,
               ),
-
               const SizedBox(width: 14),
-
-              Expanded(
-                child: StatusButton(
-                  title: 'FAIL',
-                  selected: selectedStatus == 'FAIL',
-
-                  onTap: () {
-                    setState(() {
-                      selectedStatus = 'FAIL';
-                    });
-                  },
-                ),
+              _statusButton(
+                'FAIL',
+                ItemStatus.fail,
+                item.status == ItemStatus.fail,
               ),
             ],
           ),
-
           const SizedBox(height: 24),
-
-          /// NOTES
-          TextField(
-            controller: notesController,
-
-            maxLines: 3,
-
+          TextFormField(
+            initialValue: item.notes,
+            maxLines: 2,
             style: const TextStyle(color: AppColors.textPrimary),
-
+            onChanged: onNotesChanged,
             decoration: InputDecoration(
               hintText: 'Inspector notes...',
-
               hintStyle: const TextStyle(color: AppColors.textSecondary),
-
               filled: true,
-
               fillColor: AppColors.background,
-
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-
-                borderSide: BorderSide(color: AppColors.gold.withOpacity(0.3)),
-              ),
-
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-
-                borderSide: BorderSide(color: AppColors.gold.withOpacity(0.3)),
-              ),
-
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-
-                borderSide: const BorderSide(color: AppColors.gold, width: 1.5),
-              ),
             ),
-          ),
-
-          const SizedBox(height: 24),
-
-          /// ACTION ROW
-          Row(
-            children: [
-              OutlinedButton.icon(
-                onPressed: () {},
-
-                icon: const Icon(Icons.camera_alt_outlined),
-
-                label: const Text('Add Photo'),
-              ),
-
-              const SizedBox(width: 20),
-
-              OutlinedButton.icon(
-                onPressed: () {},
-
-                icon: const Icon(Icons.warning_amber_outlined),
-
-                label: const Text('Roadworthy Relevant'),
-              ),
-            ],
           ),
         ],
       ),
     );
   }
-}
 
-class StatusButton extends StatelessWidget {
-  final String title;
-  final bool selected;
-  final VoidCallback onTap;
+  Widget _statusButton(String label, ItemStatus statusType, bool isSelected) {
+    Color activeColor = AppColors.gold;
+    if (statusType == ItemStatus.pass) activeColor = AppColors.success;
+    if (statusType == ItemStatus.attention) activeColor = AppColors.warning;
+    if (statusType == ItemStatus.fail) activeColor = AppColors.danger;
 
-  const StatusButton({
-    super.key,
-    required this.title,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-
-      onTap: onTap,
-
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 18),
-
-        decoration: BoxDecoration(
-          color: selected ? AppColors.gold : AppColors.background,
-
-          borderRadius: BorderRadius.circular(14),
-
-          border: Border.all(color: AppColors.gold),
-        ),
-
-        alignment: Alignment.center,
-
-        child: Text(
-          title,
-
-          style: TextStyle(
-            color: selected ? Colors.black : AppColors.gold,
-
-            fontWeight: FontWeight.bold,
-
-            letterSpacing: 1,
+    return Expanded(
+      child: InkWell(
+        onTap: () => onStatusChanged(statusType),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: isSelected ? activeColor : AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? activeColor : AppColors.border,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.black : AppColors.textSecondary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),

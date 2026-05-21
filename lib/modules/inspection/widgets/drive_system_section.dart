@@ -1,30 +1,38 @@
 import 'package:flutter/material.dart';
-
+import '../providers/inspection_provider.dart';
+import '../models/inspection_models.dart';
 import 'inspection_item_card.dart';
 
 class DriveSystemSection extends StatelessWidget {
-  const DriveSystemSection({super.key});
+  final ActiveInspectionProvider provider;
+
+  const DriveSystemSection({super.key, required this.provider});
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        InspectionItemCard(title: 'Suspension Rack Ends'),
+    final driveItems = provider.sections['Drive System'] ?? [];
 
-        InspectionItemCard(title: 'Shock Absorbers'),
-
-        InspectionItemCard(title: 'Steering Rack'),
-
-        InspectionItemCard(title: 'CV Joints'),
-
-        InspectionItemCard(title: 'Brake Pipes'),
-
-        InspectionItemCard(title: 'Brake Discs'),
-
-        InspectionItemCard(title: 'Brake Pads'),
-
-        InspectionItemCard(title: 'Wheel Bearings'),
-      ],
+    return Column(
+      children:
+          driveItems.map((item) {
+            return InspectionItemCard(
+              item: item,
+              onStatusChanged: (newStatus) {
+                provider.updateComponentStatus(
+                  'Drive System',
+                  item.title,
+                  newStatus,
+                );
+              },
+              onNotesChanged: (newNotes) {
+                provider.updateComponentNotes(
+                  'Drive System',
+                  item.title,
+                  newNotes,
+                );
+              },
+            );
+          }).toList(),
     );
   }
 }

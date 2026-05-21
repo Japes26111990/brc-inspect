@@ -1,22 +1,37 @@
 import 'package:flutter/material.dart';
-
+import '../providers/inspection_provider.dart';
 import 'inspection_item_card.dart';
 
 class VehicleInteriorSection extends StatelessWidget {
-  const VehicleInteriorSection({super.key});
+  final ActiveInspectionProvider provider;
+
+  const VehicleInteriorSection({super.key, required this.provider});
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        InspectionItemCard(title: 'Seats'),
-        InspectionItemCard(title: 'Dashboard'),
-        InspectionItemCard(title: 'Roof Lining'),
-        InspectionItemCard(title: 'Air Conditioning'),
-        InspectionItemCard(title: 'Infotainment System'),
-        InspectionItemCard(title: 'Windows'),
-        InspectionItemCard(title: 'Seat Belts'),
-      ],
+    final items = provider.sections['Vehicle Interior'] ?? [];
+
+    return Column(
+      children:
+          items.map((item) {
+            return InspectionItemCard(
+              item: item,
+              onStatusChanged: (newStatus) {
+                provider.updateComponentStatus(
+                  'Vehicle Interior',
+                  item.title,
+                  newStatus,
+                );
+              },
+              onNotesChanged: (newNotes) {
+                provider.updateComponentNotes(
+                  'Vehicle Interior',
+                  item.title,
+                  newNotes,
+                );
+              },
+            );
+          }).toList(),
     );
   }
 }

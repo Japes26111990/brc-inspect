@@ -1,21 +1,40 @@
 import 'package:flutter/material.dart';
-
+import '../providers/inspection_provider.dart';
 import 'inspection_item_card.dart';
 
 class WheelsTyresSection extends StatelessWidget {
-  const WheelsTyresSection({super.key});
+  final ActiveInspectionProvider provider;
+
+  const WheelsTyresSection({super.key, required this.provider});
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        InspectionItemCard(title: 'Front Left Tyre'),
-        InspectionItemCard(title: 'Front Right Tyre'),
-        InspectionItemCard(title: 'Rear Left Tyre'),
-        InspectionItemCard(title: 'Rear Right Tyre'),
-        InspectionItemCard(title: 'Spare Wheel'),
-        InspectionItemCard(title: 'Wheel Condition'),
-      ],
+    final items =
+        provider.sections['Mechanics & Wheels'] ??
+        provider.sections['Wheels & Tyres'] ??
+        [];
+
+    return Column(
+      children:
+          items.map((item) {
+            return InspectionItemCard(
+              item: item,
+              onStatusChanged: (newStatus) {
+                provider.updateComponentStatus(
+                  'Wheels & Tyres',
+                  item.title,
+                  newStatus,
+                );
+              },
+              onNotesChanged: (newNotes) {
+                provider.updateComponentNotes(
+                  'Wheels & Tyres',
+                  item.title,
+                  newNotes,
+                );
+              },
+            );
+          }).toList(),
     );
   }
 }

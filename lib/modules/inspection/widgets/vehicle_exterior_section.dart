@@ -1,42 +1,37 @@
 import 'package:flutter/material.dart';
-
+import '../providers/inspection_provider.dart';
 import 'inspection_item_card.dart';
 
 class VehicleExteriorSection extends StatelessWidget {
-  const VehicleExteriorSection({super.key});
+  final ActiveInspectionProvider provider;
+
+  const VehicleExteriorSection({super.key, required this.provider});
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        InspectionItemCard(title: 'Front Bumper'),
+    final items = provider.sections['Vehicle Exterior'] ?? [];
 
-        InspectionItemCard(title: 'Bonnet'),
-
-        InspectionItemCard(title: 'Left Fender'),
-
-        InspectionItemCard(title: 'Right Fender'),
-
-        InspectionItemCard(title: 'Doors'),
-
-        InspectionItemCard(title: 'Roof'),
-
-        InspectionItemCard(title: 'Boot Lid'),
-
-        InspectionItemCard(title: 'Mirrors'),
-
-        InspectionItemCard(title: 'Windscreen'),
-
-        InspectionItemCard(title: 'Headlights'),
-
-        InspectionItemCard(title: 'Taillights'),
-
-        InspectionItemCard(title: 'Paint Condition'),
-
-        InspectionItemCard(title: 'Rust / Corrosion'),
-
-        InspectionItemCard(title: 'Accident Damage'),
-      ],
+    return Column(
+      children:
+          items.map((item) {
+            return InspectionItemCard(
+              item: item,
+              onStatusChanged: (newStatus) {
+                provider.updateComponentStatus(
+                  'Vehicle Exterior',
+                  item.title,
+                  newStatus,
+                );
+              },
+              onNotesChanged: (newNotes) {
+                provider.updateComponentNotes(
+                  'Vehicle Exterior',
+                  item.title,
+                  newNotes,
+                );
+              },
+            );
+          }).toList(),
     );
   }
 }
