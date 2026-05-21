@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_colors.dart';
+import '../../../core/services/pdf_service.dart'; // <--- NEW IMPORT FOR PDF
 import '../providers/inspection_provider.dart';
 import '../widgets/vehicle_details_section.dart';
 import '../widgets/drive_system_section.dart';
@@ -35,11 +36,54 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
     'Summary',
   ];
 
-  void nextStep() {
+  void nextStep() async {
+    String currentSectionName = sections[currentStep];
+    bool isComplete = inspectionState.isSectionComplete(currentSectionName);
+
+    if (!isComplete) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'INCOMPLETE: You must capture photos and assess all items in $currentSectionName before proceeding.',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      return; 
+    }
+
+    // IF WE ARE NOT ON THE LAST PAGE -> GO TO NEXT PAGE
     if (currentStep < sections.length - 1) {
       setState(() {
         currentStep++;
       });
+    } 
+    // IF WE ARE ON THE LAST PAGE -> GENERATE PDF AND EXIT
+    else {
+      // Show loading indicator (optional but good practice)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Generating PDF Report...'), duration: Duration(seconds: 1)),
+      );
+      
+      // Trigger the PDF engine
+      await PDFService.generateAndPrintReport(inspectionState);
+      
+      // Navigate back to the dashboard when done
+      if (mounted) {
+        Navigator.pop(context);
+      }
     }
   }
 
@@ -136,22 +180,15 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
                           ),
                           const SizedBox(height: 30),
 
-                          // Injecting running memory controller down into each section
-                          if (currentStep == 0) const VehicleDetailsSection(),
-                          if (currentStep == 1)
-                            DriveSystemSection(provider: inspectionState),
-                          if (currentStep == 2)
-                            EngineCompartmentSection(provider: inspectionState),
-                          if (currentStep == 3)
-                            VehicleExteriorSection(provider: inspectionState),
-                          if (currentStep == 4)
-                            VehicleInteriorSection(provider: inspectionState),
-                          if (currentStep == 5)
-                            TestDriveSection(provider: inspectionState),
-                          if (currentStep == 6)
-                            WheelsTyresSection(provider: inspectionState),
-                          if (currentStep == 7) const PhotosSection(),
-                          if (currentStep == 8) const SummarySection(),
+                          if (currentStep == 0) VehicleDetailsSection(provider: inspectionState),
+                          if (currentStep == 1) DriveSystemSection(provider: inspectionState),
+                          if (currentStep == 2) EngineCompartmentSection(provider: inspectionState),
+                          if (currentStep == 3) VehicleExteriorSection(provider: inspectionState),
+                          if (currentStep == 4) VehicleInteriorSection(provider: inspectionState),
+                          if (currentStep == 5) TestDriveSection(provider: inspectionState),
+                          if (currentStep == 6) WheelsTyresSection(provider: inspectionState),
+                          if (currentStep == 7) PhotosSection(provider: inspectionState),
+                          if (currentStep == 8) SummarySection(provider: inspectionState),
                         ],
                       );
                     },

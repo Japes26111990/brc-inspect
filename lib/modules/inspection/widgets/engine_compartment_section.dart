@@ -12,26 +12,13 @@ class EngineCompartmentSection extends StatelessWidget {
     final items = provider.sections['Engine Compartment'] ?? [];
 
     return Column(
-      children:
-          items.map((item) {
-            return InspectionItemCard(
-              item: item,
-              onStatusChanged: (newStatus) {
-                provider.updateComponentStatus(
-                  'Engine Compartment',
-                  item.title,
-                  newStatus,
-                );
-              },
-              onNotesChanged: (newNotes) {
-                provider.updateComponentNotes(
-                  'Engine Compartment',
-                  item.title,
-                  newNotes,
-                );
-              },
-            );
-          }).toList(),
+      children: items.map((item) {
+        return InspectionItemCard(
+          item: item,
+          onStatusChanged: (newStatus) => provider.updateComponentStatus('Engine Compartment', item.title, newStatus),
+          onNotesChanged: (newNotes) => provider.updateComponentNotes('Engine Compartment', item.title, newNotes),
+        );
+      }).toList(),
     );
   }
 }

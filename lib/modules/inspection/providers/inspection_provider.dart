@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import '../models/inspection_models.dart';
 
 class ActiveInspectionProvider extends ChangeNotifier {
+  // ==========================================
+  // 🚀 DEVELOPER TESTING SWITCH 🚀
+  // Change this to 'false' to lock down the app and enforce all photos/comments.
+  // Change this to 'true' to quickly skip through pages during testing.
+  // ==========================================
+  bool bypassGatekeeperForTesting = true; 
+
   // Vehicle Details State Map
   final Map<String, String> vehicleDetails = {
     'Registration Number': '',
@@ -17,13 +24,28 @@ class ActiveInspectionProvider extends ChangeNotifier {
     'Client Name': '',
   };
 
-  // Complete operational checklist infrastructure across all sections
+  // Intelligent Tyre State List
+  final List<TyreResult> tyres = [
+    TyreResult(position: 'Front Left'),
+    TyreResult(position: 'Front Right'),
+    TyreResult(position: 'Rear Left'),
+    TyreResult(position: 'Rear Right'),
+  ];
+
+  // 360 Mandatory Photos State
+  final List<Map<String, dynamic>> vehicle360Photos = [
+    {'label': 'Front View', 'path': null, 'hasDamage': null, 'notes': ''},
+    {'label': 'Rear View', 'path': null, 'hasDamage': null, 'notes': ''},
+    {'label': 'Left Side', 'path': null, 'hasDamage': null, 'notes': ''},
+    {'label': 'Right Side', 'path': null, 'hasDamage': null, 'notes': ''},
+    {'label': 'Odometer (Mileage)', 'path': null, 'hasDamage': null, 'notes': ''},
+    {'label': 'VIN Plate', 'path': null, 'hasDamage': null, 'notes': ''},
+  ];
+
+  // Complete operational checklist infrastructure across standard sections
   final Map<String, List<ComponentResult>> sections = {
     'Drive System': [
-      ComponentResult(
-        title: 'Suspension Rack Ends',
-        isRoadworthyRelevant: true,
-      ),
+      ComponentResult(title: 'Suspension Rack Ends', isRoadworthyRelevant: true),
       ComponentResult(title: 'Shock Absorbers'),
       ComponentResult(title: 'Steering Rack'),
       ComponentResult(title: 'CV Joints'),
@@ -54,7 +76,7 @@ class ActiveInspectionProvider extends ChangeNotifier {
       ComponentResult(title: 'Headlights', isRoadworthyRelevant: true),
       ComponentResult(title: 'Taillights', isRoadworthyRelevant: true),
       ComponentResult(title: 'Paint Condition'),
-      ComponentResult(title: 'Rust / Corrosion'),
+      ComponentResult(title: 'Rust / Corrosion', isRoadworthyRelevant: true),
       ComponentResult(title: 'Accident Damage'),
     ],
     'Vehicle Interior': [
@@ -70,30 +92,33 @@ class ActiveInspectionProvider extends ChangeNotifier {
       ComponentResult(title: 'Engine Performance'),
       ComponentResult(title: 'Gearbox Operation'),
       ComponentResult(title: 'Braking Performance', isRoadworthyRelevant: true),
-      ComponentResult(title: 'Steering Response'),
+      ComponentResult(title: 'Steering Response', isRoadworthyRelevant: true),
       ComponentResult(title: 'Suspension Noise'),
       ComponentResult(title: 'Wheel Alignment'),
     ],
-    'Wheels & Tyres': [
-      ComponentResult(title: 'Front Left Tyre', isRoadworthyRelevant: true),
-      ComponentResult(title: 'Front Right Tyre', isRoadworthyRelevant: true),
-      ComponentResult(title: 'Rear Left Tyre', isRoadworthyRelevant: true),
-      ComponentResult(title: 'Rear Right Tyre', isRoadworthyRelevant: true),
-      ComponentResult(title: 'Spare Wheel'),
-      ComponentResult(title: 'Wheel Condition'),
-    ],
   };
+
+  // Global Check for Roadworthy Pass/Fail Engine
+  bool get passesRoadworthy {
+    for (var tyre in tyres) {
+      if (tyre.treadDepthMm < 1) return false; 
+    }
+    for (var section in sections.values) {
+      for (var item in section) {
+        if (item.isRoadworthyRelevant && item.status == ItemStatus.fail) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 
   void updateVehicleDetail(String key, String value) {
     vehicleDetails[key] = value;
     notifyListeners();
   }
 
-  void updateComponentStatus(
-    String sectionName,
-    String title,
-    ItemStatus newStatus,
-  ) {
+  void updateComponentStatus(String sectionName, String title, ItemStatus newStatus) {
     final list = sections[sectionName];
     if (list != null) {
       final item = list.firstWhere((element) => element.title == title);
@@ -108,5 +133,63 @@ class ActiveInspectionProvider extends ChangeNotifier {
       final item = list.firstWhere((element) => element.title == title);
       item.notes = newNotes;
     }
+  }
+
+  void updateTyreTread(String position, String depthString) {
+    final tyre = tyres.firstWhere((t) => t.position == position);
+    final depth = int.tryParse(depthString);
+    
+    if (depth != null) {
+      tyre.treadDepthMm = depth;
+      tyre.evaluateRoadworthyLimit();
+      notifyListeners();
+    }
+  }
+
+  // The Gatekeeper: Checks if a section is 100% complete
+  bool isSectionComplete(String sectionName) {
+    // 🚀 If testing mode is ON, instantly let them pass to the next screen
+    if (bypassGatekeeperForTesting) return true;
+
+    if (sectionName == 'Vehicle Details') {
+      final reg = vehicleDetails['Registration Number'] ?? '';
+      final vin = vehicleDetails['VIN Number'] ?? '';
+      return reg.trim().isNotEmpty && vin.trim().isNotEmpty;
+    }
+    
+    if (sectionName == 'Wheels & Tyres') {
+      return tyres.every((t) => t.status != ItemStatus.pending);
+    }
+
+    if (sectionName == 'Test Drive') {
+      final list = sections['Test Drive'] ?? [];
+      return list.every((item) {
+        if (item.rating == 0) return false; // Must be rated
+        if (item.rating <= 4 && item.notes.trim().isEmpty) return false; // Must have notes if <= 4
+        return true;
+      });
+    }
+
+    if (sectionName == 'Photos') {
+      // Every photo must be taken, and if there is damage, notes must be filled
+      return vehicle360Photos.every((photo) {
+        if (photo['path'] == null || photo['hasDamage'] == null) return false;
+        if (photo['hasDamage'] == true && photo['notes'].toString().trim().isEmpty) return false;
+        return true;
+      });
+    }
+
+    final list = sections[sectionName];
+    if (list != null) {
+      // BULLETPROOF CHECK: 
+      // 1. Status cannot be pending.
+      // 2. The photo array MUST contain at least one photo.
+      return list.every((item) => 
+          item.status != ItemStatus.pending && 
+          item.photoPaths.isNotEmpty
+      );
+    }
+
+    return true; 
   }
 }

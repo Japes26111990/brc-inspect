@@ -12,26 +12,13 @@ class VehicleExteriorSection extends StatelessWidget {
     final items = provider.sections['Vehicle Exterior'] ?? [];
 
     return Column(
-      children:
-          items.map((item) {
-            return InspectionItemCard(
-              item: item,
-              onStatusChanged: (newStatus) {
-                provider.updateComponentStatus(
-                  'Vehicle Exterior',
-                  item.title,
-                  newStatus,
-                );
-              },
-              onNotesChanged: (newNotes) {
-                provider.updateComponentNotes(
-                  'Vehicle Exterior',
-                  item.title,
-                  newNotes,
-                );
-              },
-            );
-          }).toList(),
+      children: items.map((item) {
+        return InspectionItemCard(
+          item: item,
+          onStatusChanged: (newStatus) => provider.updateComponentStatus('Vehicle Exterior', item.title, newStatus),
+          onNotesChanged: (newNotes) => provider.updateComponentNotes('Vehicle Exterior', item.title, newNotes),
+        );
+      }).toList(),
     );
   }
 }
