@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../../../theme/app_colors.dart';
-import '../../../core/services/pdf_service.dart'; // <--- NEW IMPORT FOR PDF
+import '../../../core/services/pdf_service.dart';
 import '../providers/inspection_provider.dart';
 import '../widgets/vehicle_details_section.dart';
 import '../widgets/drive_system_section.dart';
@@ -22,7 +24,7 @@ class InspectionFlowScreen extends StatefulWidget {
 class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
   int currentStep = 0;
 
-  final ActiveInspectionProvider inspectionState = ActiveInspectionProvider();
+  // 🎯 FIXED: Removed the direct instantiation here so we don't wipe out menu choices!
 
   final List<String> sections = [
     'Vehicle Details',
@@ -36,7 +38,8 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
     'Summary',
   ];
 
-  void nextStep() async {
+  // 🎯 FIXED: Added inspectionState parameter to receive the live provider context
+  void nextStep(ActiveInspectionProvider inspectionState) async {
     String currentSectionName = sections[currentStep];
     bool isComplete = inspectionState.isSectionComplete(currentSectionName);
 
@@ -53,7 +56,7 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'INCOMPLETE: You must capture photos and assess all items in $currentSectionName before proceeding.',
+                  'INCOMPLETE: You must assess items in $currentSectionName before proceeding.',
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -64,23 +67,16 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
       return; 
     }
 
-    // IF WE ARE NOT ON THE LAST PAGE -> GO TO NEXT PAGE
     if (currentStep < sections.length - 1) {
       setState(() {
         currentStep++;
       });
-    } 
-    // IF WE ARE ON THE LAST PAGE -> GENERATE PDF AND EXIT
-    else {
-      // Show loading indicator (optional but good practice)
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Generating PDF Report...'), duration: Duration(seconds: 1)),
+        const SnackBar(content: Text('Generating SpaceX-Grade Manifest...'), duration: Duration(seconds: 1)),
       );
-      
-      // Trigger the PDF engine
+      // 🚀 Passing the TRUE live global context state directly into the PDF engine!
       await PDFService.generateAndPrintReport(inspectionState);
-      
-      // Navigate back to the dashboard when done
       if (mounted) {
         Navigator.pop(context);
       }
@@ -97,23 +93,30 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 🌍 CONNECT THE VALVE: Read the live active global provider instance passing through the tree!
+    final inspectionState = Provider.of<ActiveInspectionProvider>(context);
+
+    final screenSize = MediaQuery.of(context).size;
+    final bool useCompactPadding = screenSize.width < 600;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.panel,
+        elevation: 0,
         title: Row(
           children: [
             Image.asset('assets/logos/brc_logo.png', height: 30),
             const SizedBox(width: 12),
-            const Text('Inspection Workflow'),
+            const Text('Inspection Workflow', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
       ),
       body: Column(
         children: [
-          /// PROGRESS SECTION
+          /// PROGRESS INDICATOR BAR
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(useCompactPadding ? 16 : 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -122,18 +125,11 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
                   children: [
                     Text(
                       'Step ${currentStep + 1} of ${sections.length}',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
                     ),
                     Text(
                       sections[currentStep],
-                      style: const TextStyle(
-                        color: AppColors.gold,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(color: AppColors.gold, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -151,77 +147,97 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
             ),
           ),
 
-          /// MAIN CONTENT
+          /// MAIN RESPONSIVE CONTENT HOUSING
           Expanded(
             child: Center(
               child: Container(
-                width: 1000,
-                margin: const EdgeInsets.all(24),
-                padding: const EdgeInsets.all(40),
+                constraints: const BoxConstraints(maxWidth: 1200),
+                width: double.infinity,
+                margin: EdgeInsets.symmetric(
+                  horizontal: useCompactPadding ? 12 : 24, 
+                  vertical: useCompactPadding ? 8 : 16
+                ),
+                padding: EdgeInsets.all(useCompactPadding ? 16 : 32),
                 decoration: BoxDecoration(
                   color: AppColors.panel,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: AppColors.gold, width: 1),
                 ),
-                child: SingleChildScrollView(
-                  child: ListenableBuilder(
-                    listenable: inspectionState,
-                    builder: (context, _) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            sections[currentStep],
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 34,
-                              fontWeight: FontWeight.bold,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    bool isPhoneSize = constraints.maxWidth < 650;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          sections[currentStep],
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: isPhoneSize ? 26 : 34,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        
+                        // Core Form Component Canvas
+                        Expanded(
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            child: ListenableBuilder(
+                              listenable: inspectionState,
+                              builder: (context, _) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (currentStep == 0) VehicleDetailsSection(provider: inspectionState),
+                                    if (currentStep == 1) DriveSystemSection(provider: inspectionState),
+                                    if (currentStep == 2) EngineCompartmentSection(provider: inspectionState),
+                                    if (currentStep == 3) VehicleExteriorSection(provider: inspectionState),
+                                    if (currentStep == 4) VehicleInteriorSection(provider: inspectionState),
+                                    if (currentStep == 5) TestDriveSection(provider: inspectionState),
+                                    if (currentStep == 6) WheelsTyresSection(provider: inspectionState),
+                                    if (currentStep == 7) PhotosSection(provider: inspectionState),
+                                    if (currentStep == 8) SummarySection(provider: inspectionState),
+                                  ],
+                                );
+                              },
                             ),
                           ),
-                          const SizedBox(height: 30),
-
-                          if (currentStep == 0) VehicleDetailsSection(provider: inspectionState),
-                          if (currentStep == 1) DriveSystemSection(provider: inspectionState),
-                          if (currentStep == 2) EngineCompartmentSection(provider: inspectionState),
-                          if (currentStep == 3) VehicleExteriorSection(provider: inspectionState),
-                          if (currentStep == 4) VehicleInteriorSection(provider: inspectionState),
-                          if (currentStep == 5) TestDriveSection(provider: inspectionState),
-                          if (currentStep == 6) WheelsTyresSection(provider: inspectionState),
-                          if (currentStep == 7) PhotosSection(provider: inspectionState),
-                          if (currentStep == 8) SummarySection(provider: inspectionState),
-                        ],
-                      );
-                    },
-                  ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
           ),
 
-          /// BOTTOM NAVIGATION
+          /// BOTTOM NAVIGATION PANEL
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(useCompactPadding ? 16 : 24),
             child: Row(
               children: [
                 if (currentStep > 0)
                   SizedBox(
-                    width: 180,
+                    width: useCompactPadding ? 120 : 180,
                     height: 58,
                     child: OutlinedButton(
                       onPressed: previousStep,
-                      child: const Text('BACK'),
+                      child: const Text('BACK', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 const Spacer(),
                 SizedBox(
-                  width: 220,
+                  width: useCompactPadding ? 140 : 220,
                   height: 58,
                   child: ElevatedButton(
-                    onPressed: nextStep,
+                    onPressed: () => nextStep(inspectionState), // 🚀 Pass the read provider context down on press
                     child: Text(
                       currentStep == sections.length - 1 ? 'COMPLETE' : 'NEXT',
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: TextStyle(
+                        fontSize: useCompactPadding ? 16 : 18,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
                       ),

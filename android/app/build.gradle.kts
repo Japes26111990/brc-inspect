@@ -28,6 +28,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // 🚀 FIXED: Sets the official user-facing display name to "BRC Inspect" on the home screen
+        manifestPlaceholders["appName"] = "BRC Inspect"
     }
 
     buildTypes {

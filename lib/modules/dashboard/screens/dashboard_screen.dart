@@ -132,7 +132,7 @@ class DashboardButton extends StatelessWidget {
 
           boxShadow: [
             BoxShadow(
-              color: AppColors.gold.withOpacity(isPrimary ? 0.12 : 0.05),
+              color: AppColors.gold.withValues(alpha: isPrimary ? 0.12 : 0.05),
               blurRadius: isPrimary ? 24 : 12,
             ),
           ],

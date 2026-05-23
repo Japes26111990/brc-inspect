@@ -1,54 +1,77 @@
-enum ItemStatus { pending, pass, attention, fail }
+enum ItemStatus { pass, attention, fail, na }
 
-class ComponentResult {
-  final String title;
+class SubPhotoTarget {
+  final String id;
+  final String label;
+  String? photoPath;
   ItemStatus status;
   String notes;
-  List<String> photoPaths;
-  bool isRoadworthyRelevant;
-  int rating = 0; // <--- ADD "= 0" HERE TO FIX THE ERROR
 
-  ComponentResult({
-    required this.title,
-    this.status = ItemStatus.pending,
+  SubPhotoTarget({
+    required this.id,
+    required this.label,
+    this.photoPath,
+    this.status = ItemStatus.na,
     this.notes = '',
-    this.photoPaths = const [],
-    this.isRoadworthyRelevant = false,
-    this.rating = 0,
   });
 }
 
+class ComponentResult {
+  final String id;
+  final String title;
+  final bool isRoadworthyRelevant;
+  bool isNotApplicable;
+  final List<SubPhotoTarget> photoTargets;
+
+  ComponentResult({
+    required this.id,
+    required this.title,
+    this.isRoadworthyRelevant = false,
+    this.isNotApplicable = false,
+    required this.photoTargets,
+  });
+
+  ItemStatus get finalStatus {
+    if (isNotApplicable) return ItemStatus.na;
+    if (photoTargets.any((p) => p.status == ItemStatus.fail)) return ItemStatus.fail;
+    if (photoTargets.any((p) => p.status == ItemStatus.attention)) return ItemStatus.attention;
+    return ItemStatus.pass;
+  }
+
+  String get aggregatedNotes {
+    return photoTargets
+        .where((p) => p.notes.isNotEmpty)
+        .map((p) => '${p.label}: ${p.notes}')
+        .join(' | ');
+  }
+}
+
 class TyreResult {
-  final String position; 
-  int treadDepthMm;      
-  ItemStatus status;
-  String notes;
-  
-  // NEW: Deep Inspection Specs
-  String size;
-  String loadSpeedIndex;
+  final String position;
   String make;
   String tyreModel;
+  String size;
+  String loadSpeedIndex;
+  int treadDepthMm;
+  ItemStatus status;
+  String? photoPath; // 📸 FIXED: Permanently registers the core property variable slot
 
   TyreResult({
     required this.position,
-    this.treadDepthMm = 0, 
-    this.status = ItemStatus.pending,
-    this.notes = '',
-    this.size = '',
-    this.loadSpeedIndex = '',
     this.make = '',
     this.tyreModel = '',
+    this.size = '',
+    this.loadSpeedIndex = '',
+    this.treadDepthMm = 8,
+    this.status = ItemStatus.na,
+    this.photoPath,
   });
 
   void evaluateRoadworthyLimit() {
-    // If it's less than 1mm, it's illegal. If they haven't filled out the make/model, hold it as pending.
-    if (treadDepthMm <= 0) {
+    if (treadDepthMm < 1) {
       status = ItemStatus.fail;
-    } else if (treadDepthMm <= 1) {
+    } else if (treadDepthMm <= 3) {
       status = ItemStatus.attention;
-    } else if (size.isEmpty || make.isEmpty) {
-      status = ItemStatus.pending; // Gatekeeper lock: forces them to fill the text fields
     } else {
       status = ItemStatus.pass;
     }
