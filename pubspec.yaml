@@ -13,10 +13,11 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  image_picker: ^1.2.2
+  image_picker: ^1.1.2
   mobile_scanner: ^7.2.0
-  pdf: ^3.12.0
-  printing: ^5.14.3
+  # 🛠️ THE FIX: Downgraded to the incredibly stable versions built for your SDK
+  pdf: ^3.11.0
+  printing: ^5.11.1
   provider: ^6.1.5+1
 
 dev_dependencies:
@@ -32,11 +33,11 @@ flutter:
   assets:
     - assets/logos/
 
-# 🚀 UPDATED: Added adaptive background mapping to kill the white borders
+# 🚀 Adaptive background mapping for sleek app icons
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/logos/brc_logo.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#0B132B" # 🌟 Change this to match your exact dark navy blue hex code
+  adaptive_icon_background: "#0B132B"
   adaptive_icon_foreground: "assets/logos/brc_logo.png"

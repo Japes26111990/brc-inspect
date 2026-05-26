@@ -1,32 +1,34 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  /// BACKGROUNDS
-  static const Color background = Color(0xFF08111F);
+  // Backgrounds
+  static const Color background = Color(
+    0xFFF5F6F8,
+  ); // Light crisp grey for the app background
+  static const Color card =
+      Colors.white; // Pure white for form cards and inputs
 
-  static const Color panel = Color(0xFF101A2B);
+  // 🛠️ THE FIX: Added 'panel' back in so your older screens don't crash!
+  static const Color panel = Colors.white;
 
-  static const Color card = Color(0xFF162033);
+  // Typography
+  static const Color textPrimary = Color(
+    0xFF1A1A1A,
+  ); // Deep black for readability
+  static const Color textSecondary = Color(
+    0xFF666666,
+  ); // Mid-grey for subtext and hints
 
-  /// GOLD
-  static const Color gold = Color(0xFFD4A017);
+  // Brand / Accents (Multipoint Check / AA styling)
+  static const Color primary = Color(
+    0xFF0B132B,
+  ); // Dark Navy for AppBars/Headers
+  static const Color accent = Color(0xFFFFD700); // Signature Yellow/Gold
+  static const Color gold = Color(0xFFD4AF37); // Standard Gold
+  static const Color goldDark = Color(0xFFAA8B2C);
 
-  static const Color goldLight = Color(0xFFFFD369);
-
-  static const Color goldDark = Color(0xFF8C6A00);
-
-  /// BORDERS
-  static const Color border = Color(0xFF2A3548);
-
-  /// TEXT
-  static const Color textPrimary = Colors.white;
-
-  static const Color textSecondary = Color(0xFFB8C2D1);
-
-  /// STATUS COLORS
-  static const Color success = Color(0xFF00C853);
-
-  static const Color warning = Color(0xFFFFAB00);
-
-  static const Color danger = Color(0xFFFF5252);
+  // Status / Utility
+  static const Color border = Color(0xFFE0E0E0); // Soft borders for light mode
+  static const Color success = Color(0xFF2E7D32); // Pass (Green)
+  static const Color error = Color(0xFFC62828); // Fail (Red)
 }

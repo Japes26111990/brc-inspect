@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'theme/app_theme.dart';
 import 'modules/auth/screens/login_screen.dart';
-import 'modules/inspection/providers/inspection_provider.dart'; 
+import 'modules/inspection/providers/inspection_provider.dart';
 
 void main() {
   runApp(
@@ -25,8 +25,9 @@ class BRCInspectApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'BRC Inspect',
-      theme: AppTheme.darkTheme,
-      home: LoginScreen(), 
+      theme:
+          AppTheme.lightTheme, // 🌟 Instantly applies your new light palette!
+      home: LoginScreen(),
     );
   }
 }

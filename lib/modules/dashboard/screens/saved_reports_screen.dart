@@ -16,7 +16,7 @@ class SavedReportsScreen extends StatelessWidget {
       {
         'registration': 'CA 123-456',
         'vehicle': 'TOYOTA HILUX 2.8 GD-6',
-        'type': InspectionType.roadworthy,
+        'type': InspectionType.multipointCheck,
         'progress': 0.77,
         'lastUpdated': '20 mins ago',
       },
@@ -30,7 +30,7 @@ class SavedReportsScreen extends StatelessWidget {
       {
         'registration': 'CAA 555-111',
         'vehicle': 'MERCEDES-BENZ ACTROS 2652',
-        'type': InspectionType.fleet,
+        'type': InspectionType.technicalReport,
         'progress': 0.11,
         'lastUpdated': 'Yesterday',
       },
@@ -41,7 +41,10 @@ class SavedReportsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.panel,
         elevation: 0,
-        title: const Text('Saved & Draft Reports', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Saved & Draft Reports',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: Center(
         child: Container(
@@ -78,17 +81,17 @@ class SavedReportsScreen extends StatelessWidget {
   }
 
   Widget _buildDraftCard(
-    BuildContext context, 
-    ActiveInspectionProvider provider, 
-    Map<String, dynamic> item
+    BuildContext context,
+    ActiveInspectionProvider provider,
+    Map<String, dynamic> item,
   ) {
     String typeLabel = 'Condition Report';
     Color typeColor = AppColors.gold;
-    
-    if (item['type'] == InspectionType.roadworthy) {
+
+    if (item['type'] == InspectionType.multipointCheck) {
       typeLabel = 'Roadworthy Inspection';
       typeColor = const Color(0xff10B981);
-    } else if (item['type'] == InspectionType.fleet) {
+    } else if (item['type'] == InspectionType.technicalReport) {
       typeLabel = 'Fleet Operational Audit';
       typeColor = const Color(0xff0EA5E9);
     }
@@ -98,7 +101,10 @@ class SavedReportsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.panel,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.15), width: 1),
+        border: Border.all(
+          color: AppColors.gold.withValues(alpha: 0.15),
+          width: 1,
+        ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -106,9 +112,7 @@ class SavedReportsScreen extends StatelessWidget {
           provider.setInspectionType(item['type']);
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const InspectionFlowScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const InspectionFlowScreen()),
           );
         },
         child: Padding(
@@ -121,18 +125,34 @@ class SavedReportsScreen extends StatelessWidget {
                 children: [
                   Text(
                     item['registration'],
-                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: typeColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: typeColor.withValues(alpha: 0.3), width: 0.5),
+                      border: Border.all(
+                        color: typeColor.withValues(alpha: 0.3),
+                        width: 0.5,
+                      ),
                     ),
                     child: Text(
                       typeLabel.toUpperCase(),
-                      style: TextStyle(color: typeColor, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                      style: TextStyle(
+                        color: typeColor,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                 ],
@@ -140,7 +160,11 @@ class SavedReportsScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 item['vehicle'],
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 20),
               Row(
@@ -148,11 +172,18 @@ class SavedReportsScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Progress: ${(item['progress'] * 100).toInt()}%',
-                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Text(
                     'Edited ${item['lastUpdated']}',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
