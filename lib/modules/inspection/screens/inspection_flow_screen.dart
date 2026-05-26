@@ -2,16 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../theme/app_colors.dart';
-import '../../../core/services/pdf_service.dart';
+import '../../../core/PDF/pdf_service.dart';
 import '../providers/inspection_provider.dart';
 import '../widgets/vehicle_details_section.dart';
 import '../widgets/drive_system_section.dart';
-import '../widgets/engine_compartment_section.dart';
-import '../widgets/vehicle_exterior_section.dart';
-import '../widgets/vehicle_interior_section.dart';
-import '../widgets/test_drive_section.dart';
 import '../widgets/wheels_tyres_section.dart';
-import '../widgets/photos_section.dart';
 import '../widgets/summary_section.dart';
 
 class InspectionFlowScreen extends StatefulWidget {
@@ -24,58 +19,38 @@ class InspectionFlowScreen extends StatefulWidget {
 class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
   int currentStep = 0;
 
-  // 🎯 FIXED: Removed the direct instantiation here so we don't wipe out menu choices!
-
+  // 📝 CLEAN SORTED WORKSPACE CHECKLIST - STIPPED OF PREFIXED NUMBERS
   final List<String> sections = [
     'Vehicle Details',
-    'Drive System',
-    'Engine Compartment',
-    'Vehicle Exterior',
-    'Vehicle Interior',
-    'Test Drive',
-    'Wheels & Tyres',
-    'Photos',
+    'Identification & Docs',
+    'Electrical System',
+    'Fittings & Equipment',
+    'Braking System', // Fully separated step
+    'Wheels',         // Fully separated step
+    'Suspension & Undercarriage',
+    'Steering',
+    'Engine',
+    'Exhaust System',
+    'Transmission & Drive',
+    'Instruments',
+    'Dimensions',
+    'Structural Damage',
     'Summary',
   ];
 
-  // 🎯 FIXED: Added inspectionState parameter to receive the live provider context
   void nextStep(ActiveInspectionProvider inspectionState) async {
-    String currentSectionName = sections[currentStep];
-    bool isComplete = inspectionState.isSectionComplete(currentSectionName);
-
-    if (!isComplete) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          content: Row(
-            children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'INCOMPLETE: You must assess items in $currentSectionName before proceeding.',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-      return; 
-    }
-
     if (currentStep < sections.length - 1) {
       setState(() {
         currentStep++;
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Generating SpaceX-Grade Manifest...'), duration: Duration(seconds: 1)),
+        const SnackBar(
+          content: Text('Compiling Document Manifest Template...'), 
+          duration: Duration(seconds: 1),
+        ),
       );
-      // 🚀 Passing the TRUE live global context state directly into the PDF engine!
+      // Calls your landscape official single-page A4 document replication engine
       await PDFService.generateAndPrintReport(inspectionState);
       if (mounted) {
         Navigator.pop(context);
@@ -93,9 +68,7 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 🌍 CONNECT THE VALVE: Read the live active global provider instance passing through the tree!
     final inspectionState = Provider.of<ActiveInspectionProvider>(context);
-
     final screenSize = MediaQuery.of(context).size;
     final bool useCompactPadding = screenSize.width < 600;
 
@@ -104,40 +77,28 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.panel,
         elevation: 0,
-        title: Row(
-          children: [
-            Image.asset('assets/logos/brc_logo.png', height: 30),
-            const SizedBox(width: 12),
-            const Text('Inspection Workflow', style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
+        title: const Text('BRC Inspection Pipeline', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: Column(
         children: [
-          /// PROGRESS INDICATOR BAR
+          /// SECTION PROGRESS INDICATOR SLIDER BAR
           Container(
-            padding: EdgeInsets.all(useCompactPadding ? 16 : 24),
+            padding: EdgeInsets.all(useCompactPadding ? 12 : 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Step ${currentStep + 1} of ${sections.length}',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
-                    ),
-                    Text(
-                      sections[currentStep],
-                      style: const TextStyle(color: AppColors.gold, fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                    Text('Step ${currentStep + 1} of ${sections.length}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    Text(sections[currentStep].toUpperCase(), style: const TextStyle(color: AppColors.gold, fontSize: 13, fontWeight: FontWeight.bold)),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: LinearProgressIndicator(
-                    minHeight: 10,
+                    minHeight: 6,
                     value: (currentStep + 1) / sections.length,
                     backgroundColor: AppColors.panel,
                     valueColor: const AlwaysStoppedAnimation(AppColors.gold),
@@ -147,100 +108,95 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
             ),
           ),
 
-          /// MAIN RESPONSIVE CONTENT HOUSING
+          /// CORE RESPONSIVE COMPONENT CANVA HOUSING
           Expanded(
             child: Center(
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 1200),
                 width: double.infinity,
-                margin: EdgeInsets.symmetric(
-                  horizontal: useCompactPadding ? 12 : 24, 
-                  vertical: useCompactPadding ? 8 : 16
-                ),
-                padding: EdgeInsets.all(useCompactPadding ? 16 : 32),
+                margin: EdgeInsets.symmetric(horizontal: useCompactPadding ? 8 : 16, vertical: 4),
+                padding: EdgeInsets.all(useCompactPadding ? 12 : 24),
                 decoration: BoxDecoration(
-                  color: AppColors.panel,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.gold, width: 1),
+                  color: AppColors.panel, 
+                  borderRadius: BorderRadius.circular(16), 
+                  border: Border.all(color: AppColors.gold.withOpacity(0.2), width: 1),
                 ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    bool isPhoneSize = constraints.maxWidth < 650;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          sections[currentStep],
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: isPhoneSize ? 26 : 34,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sections[currentStep], 
+                      style: TextStyle(
+                        color: AppColors.textPrimary, 
+                        fontSize: useCompactPadding ? 20 : 24, 
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (currentStep == 0) VehicleDetailsSection(provider: inspectionState),
+                            if (currentStep == 1) DriveSystemSection(provider: inspectionState, targetSectionName: 'Identification & Docs'),
+                            if (currentStep == 2) DriveSystemSection(provider: inspectionState, targetSectionName: 'Electrical System'),
+                            if (currentStep == 3) DriveSystemSection(provider: inspectionState, targetSectionName: 'Fittings & Equipment'),
+                            
+                            // 🔀 SPLIT LAYOUT INJECTION: Brakes and Wheels route seamlessly to separate render modes
+                            if (currentStep == 4) WheelsTyresSection(provider: inspectionState, renderMode: 'Brakes'), 
+                            if (currentStep == 5) WheelsTyresSection(provider: inspectionState, renderMode: 'Wheels'), 
+                            
+                            if (currentStep == 6) DriveSystemSection(provider: inspectionState, targetSectionName: 'Suspension & Undercarriage'),
+                            if (currentStep == 7) DriveSystemSection(provider: inspectionState, targetSectionName: 'Steering'),
+                            if (currentStep == 8) DriveSystemSection(provider: inspectionState, targetSectionName: 'Engine'),
+                            if (currentStep == 9) DriveSystemSection(provider: inspectionState, targetSectionName: 'Exhaust System'),
+                            if (currentStep == 10) DriveSystemSection(provider: inspectionState, targetSectionName: 'Transmission & Drive'),
+                            if (currentStep == 11) DriveSystemSection(provider: inspectionState, targetSectionName: 'Instruments'),
+                            if (currentStep == 12) DriveSystemSection(provider: inspectionState, targetSectionName: 'Dimensions'),
+                            if (currentStep == 13) DriveSystemSection(provider: inspectionState, targetSectionName: 'Structural Damage'),
+                            if (currentStep == 14) SummarySection(provider: inspectionState),
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                        
-                        // Core Form Component Canvas
-                        Expanded(
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            child: ListenableBuilder(
-                              listenable: inspectionState,
-                              builder: (context, _) {
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (currentStep == 0) VehicleDetailsSection(provider: inspectionState),
-                                    if (currentStep == 1) DriveSystemSection(provider: inspectionState),
-                                    if (currentStep == 2) EngineCompartmentSection(provider: inspectionState),
-                                    if (currentStep == 3) VehicleExteriorSection(provider: inspectionState),
-                                    if (currentStep == 4) VehicleInteriorSection(provider: inspectionState),
-                                    if (currentStep == 5) TestDriveSection(provider: inspectionState),
-                                    if (currentStep == 6) WheelsTyresSection(provider: inspectionState),
-                                    if (currentStep == 7) PhotosSection(provider: inspectionState),
-                                    if (currentStep == 8) SummarySection(provider: inspectionState),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
 
-          /// BOTTOM NAVIGATION PANEL
+          /// BOTTOM CONTROL NAVIGATION BAR PANEL
           Container(
-            padding: EdgeInsets.all(useCompactPadding ? 16 : 24),
+            padding: EdgeInsets.all(useCompactPadding ? 12 : 20),
             child: Row(
               children: [
                 if (currentStep > 0)
                   SizedBox(
-                    width: useCompactPadding ? 120 : 180,
-                    height: 58,
+                    width: useCompactPadding ? 100 : 150,
+                    height: 50,
                     child: OutlinedButton(
                       onPressed: previousStep,
-                      child: const Text('BACK', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.gold, width: 0.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('BACK', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.gold)),
                     ),
                   ),
                 const Spacer(),
                 SizedBox(
-                  width: useCompactPadding ? 140 : 220,
-                  height: 58,
+                  width: useCompactPadding ? 120 : 180,
+                  height: 50,
                   child: ElevatedButton(
-                    onPressed: () => nextStep(inspectionState), // 🚀 Pass the read provider context down on press
+                    onPressed: () => nextStep(inspectionState),
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
                     child: Text(
-                      currentStep == sections.length - 1 ? 'COMPLETE' : 'NEXT',
-                      style: TextStyle(
-                        fontSize: useCompactPadding ? 16 : 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
+                      currentStep == sections.length - 1 ? 'COMPLETE' : 'NEXT', 
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),

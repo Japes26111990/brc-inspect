@@ -18,8 +18,7 @@ class _VehicleDetailsSectionState extends State<VehicleDetailsSection> {
   @override
   void initState() {
     super.initState();
-    if (widget.provider.vehicleDetails['Inspector Name'] == null || 
-        widget.provider.vehicleDetails['Inspector Name']!.isEmpty) {
+    if (widget.provider.vehicleDetails['Inspector Name'] == null || widget.provider.vehicleDetails['Inspector Name']!.isEmpty) {
       widget.provider.vehicleDetails['Inspector Name'] = 'Jean-Pierre';
     }
   }
@@ -29,20 +28,20 @@ class _VehicleDetailsSectionState extends State<VehicleDetailsSection> {
       context,
       MaterialPageRoute(builder: (context) => const LicenseScannerScreen()),
     );
-
     if (scannedData != null) {
       setState(() {
         scannedData.forEach((key, value) {
           if (value.isNotEmpty) {
-            widget.provider.vehicleDetails[key] = value;
-            // Activate lock constraints across automated inputs immediately
-            if (widget.provider.scannedFieldsRegistry.containsKey(key)) {
-              widget.provider.scannedFieldsRegistry[key] = true;
+            // Re-route scanning indices safely if barcode uses short keys
+            String targetKey = key == 'Mileage' ? 'Odometer Reading' : key;
+            widget.provider.vehicleDetails[targetKey] = value;
+            if (widget.provider.scannedFieldsRegistry.containsKey(targetKey)) {
+              widget.provider.scannedFieldsRegistry[targetKey] = true;
             }
           }
         });
-        widget.provider.recalculateDynamicComponentBudgets();
       });
+      widget.provider.recalculateDynamicComponentBudgets();
     }
   }
 
@@ -53,7 +52,6 @@ class _VehicleDetailsSectionState extends State<VehicleDetailsSection> {
     required ValueChanged<String> onChanged,
     String? suffixTag,
   }) {
-    // Check if configuration maps declare this specific slot lock immutable
     bool isLocked = widget.provider.scannedFieldsRegistry[keyName] ?? false;
 
     return Column(
@@ -61,22 +59,22 @@ class _VehicleDetailsSectionState extends State<VehicleDetailsSection> {
       children: [
         Row(
           children: [
-            Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500)),
+            Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
             if (isLocked) ...[
               const SizedBox(width: 6),
               const Icon(Icons.lock_outline, color: AppColors.gold, size: 12),
             ]
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         TextFormField(
           initialValue: value,
           key: ValueKey('$keyName-$value'), 
           onChanged: onChanged,
-          readOnly: isLocked, // 🚀 LOCK INPUT MODE ACTIVATED
+          readOnly: isLocked,
           style: TextStyle(
             color: isLocked ? AppColors.textPrimary.withOpacity(0.6) : AppColors.textPrimary, 
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: isLocked ? FontWeight.bold : FontWeight.normal
           ),
           decoration: InputDecoration(
@@ -85,10 +83,10 @@ class _VehicleDetailsSectionState extends State<VehicleDetailsSection> {
             suffixIcon: suffixTag != null 
                 ? Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                    child: Text(suffixTag, style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
+                    child: Text(suffixTag, style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold, fontSize: 12)),
                   )
                 : null,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12), 
               borderSide: BorderSide(color: isLocked ? AppColors.gold.withOpacity(0.4) : AppColors.gold, width: 0.5)
@@ -112,25 +110,25 @@ class _VehicleDetailsSectionState extends State<VehicleDetailsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
+        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 6),
         DropdownButtonFormField<String>(
           value: options.contains(currentValue) ? currentValue : null,
           onChanged: onChanged,
           dropdownColor: AppColors.panel,
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
           icon: const Icon(Icons.arrow_drop_down, color: AppColors.gold),
           decoration: InputDecoration(
             fillColor: AppColors.background,
             filled: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.gold, width: 0.5)),
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.gold, width: 1.5)),
           ),
           items: options.map((String value) {
             return DropdownMenuItem<String>(
               value: value,
-              child: Text(value, style: const TextStyle(color: AppColors.textPrimary)),
+              child: Text(value, style: const TextStyle(color: AppColors.textPrimary, fontSize: 15)),
             );
           }).toList(),
         ),
@@ -149,10 +147,9 @@ class _VehicleDetailsSectionState extends State<VehicleDetailsSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // SCANNING TRIGGER BLOCK ACTION ROW BANNER BOUNDS
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppColors.background,
                 borderRadius: BorderRadius.circular(16),
@@ -160,40 +157,40 @@ class _VehicleDetailsSectionState extends State<VehicleDetailsSection> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.qr_code_scanner, color: AppColors.gold, size: 24),
+                  const Icon(Icons.qr_code_scanner, color: AppColors.gold, size: 22),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Automated Telemetry Capture', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
-                        Text('Align the system camera frame on the official MVLX license disk barcode.', style: TextStyle(color: AppColors.textSecondary, fontSize: isMobileWidth ? 11 : 13)),
+                        const Text('Automated Disk Scanner', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text('Align camera over the SA disc barcode to parse vehicle specs instantly.', style: TextStyle(color: AppColors.textSecondary, fontSize: isMobileWidth ? 11 : 12)),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: _navigateToScanner,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.gold,
                       foregroundColor: AppColors.background,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('SCAN DISC', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                    child: const Text('SCAN DISC', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 0.5)),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: isMobileWidth ? 1 : 2,
-              childAspectRatio: isMobileWidth ? 4.2 : 3.4,
-              mainAxisSpacing: 20,
-              crossAxisSpacing: 20,
+              childAspectRatio: isMobileWidth ? 4.4 : 3.4,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
               children: [
                 _buildResponsiveInputField(
                   label: 'Registration Number',
@@ -225,12 +222,14 @@ class _VehicleDetailsSectionState extends State<VehicleDetailsSection> {
                   keyName: 'Year Model',
                   onChanged: (v) => widget.provider.vehicleDetails['Year Model'] = v,
                 ),
+                
+                // 🏁 CORE SYNC ACTION: Writes text adjustments into the 'Odometer Reading' variable entry spot
                 _buildResponsiveInputField(
-                  label: 'Mileage (Odometer)',
-                  value: data['Mileage'] ?? '',
-                  keyName: 'Mileage',
-                  suffixTag: 'KM', // 🚀 ADDED SFIX METRIC STICKER TAG NATIVELY
-                  onChanged: (v) => widget.provider.vehicleDetails['Mileage'] = v,
+                  label: 'Mileage (Odometer Reading)',
+                  value: data['Odometer Reading'] ?? '',
+                  keyName: 'Odometer Reading',
+                  suffixTag: 'KM',
+                  onChanged: (v) => widget.provider.vehicleDetails['Odometer Reading'] = v,
                 ),
                 _buildCustomDropdownField(
                   label: 'Fuel Type',

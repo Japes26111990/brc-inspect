@@ -20,6 +20,9 @@ class ComponentResult {
   final String id;
   final String title;
   final bool isRoadworthyRelevant;
+  
+  // 🔏 CRITICAL FIX: Exposed parameter slots to resolve candidate parameter mismatches natively
+  final bool isCompulsory; 
   bool isNotApplicable;
   final List<SubPhotoTarget> photoTargets;
 
@@ -27,6 +30,7 @@ class ComponentResult {
     required this.id,
     required this.title,
     this.isRoadworthyRelevant = false,
+    this.isCompulsory = true, // Defaults to true (White background cards)
     this.isNotApplicable = false,
     required this.photoTargets,
   });
@@ -54,7 +58,7 @@ class TyreResult {
   String loadSpeedIndex;
   int treadDepthMm;
   ItemStatus status;
-  String? photoPath; // 📸 FIXED: Permanently registers the core property variable slot
+  String? photoPath;
 
   TyreResult({
     required this.position,
@@ -62,13 +66,15 @@ class TyreResult {
     this.tyreModel = '',
     this.size = '',
     this.loadSpeedIndex = '',
-    this.treadDepthMm = 8,
+    this.treadDepthMm = -1,
     this.status = ItemStatus.na,
     this.photoPath,
   });
 
   void evaluateRoadworthyLimit() {
-    if (treadDepthMm < 1) {
+    if (treadDepthMm == -1) {
+      status = ItemStatus.na;
+    } else if (treadDepthMm < 1) {
       status = ItemStatus.fail;
     } else if (treadDepthMm <= 3) {
       status = ItemStatus.attention;

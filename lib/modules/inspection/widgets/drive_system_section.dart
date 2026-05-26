@@ -8,31 +8,23 @@ import '../providers/inspection_provider.dart';
 
 class DriveSystemSection extends StatelessWidget {
   final ActiveInspectionProvider provider;
-  const DriveSystemSection({super.key, required this.provider});
+  final String targetSectionName;
+
+  const DriveSystemSection({super.key, required this.provider, required this.targetSectionName});
 
   @override
   Widget build(BuildContext context) {
-    final List<ComponentResult> allItems = provider.sections['Drive System'] ?? [];
-    
-    // 🚀 INJECTED AUTOMATIC MULTI-MODE FILTER LOGIC
-    final List<ComponentResult> filteredItems = allItems.where((component) {
-      if (provider.activeType == InspectionType.roadworthy) {
-        return component.isRoadworthyRelevant; // Drops cosmetic items instantly
-      }
-      if (provider.activeType == InspectionType.fleet) {
-        return component.isRoadworthyRelevant || component.id == 'underbody'; // Focused quick checklist
-      }
-      return true; // Returns full matrix list for detailed Condition Reports
-    }).toList();
-
-    return _DriveSystemListContainer(items: filteredItems, provider: provider);
+    final List<ComponentResult> allItems = provider.sections[targetSectionName] ?? [];
+    return _DriveSystemListContainer(items: allItems, provider: provider, targetSectionName: targetSectionName);
   }
 }
 
 class _DriveSystemListContainer extends StatefulWidget {
   final List<ComponentResult> items;
   final ActiveInspectionProvider provider;
-  const _DriveSystemListContainer({required this.items, required this.provider});
+  final String targetSectionName;
+
+  const _DriveSystemListContainer({required this.items, required this.provider, required this.targetSectionName});
 
   @override
   State<_DriveSystemListContainer> createState() => _DriveSystemListContainerState();
@@ -56,40 +48,59 @@ class _DriveSystemListContainerState extends State<_DriveSystemListContainer> {
       itemCount: widget.items.length,
       itemBuilder: (context, index) {
         final comp = widget.items[index];
+        bool hasBeenAssessed = comp.isNotApplicable || comp.photoTargets.first.status != ItemStatus.na;
+
+        // 🎨 VISUAL ENFORCEMENT: Glowing emerald background shows the item is handled and not missed
+        final Color cardBackground = hasBeenAssessed 
+            ? const Color(0xFF1B4332) 
+            : AppColors.card;
 
         return Container(
+          key: ValueKey('${widget.targetSectionName}-${comp.id}'), 
           margin: const EdgeInsets.only(bottom: 6),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: AppColors.panel,
+            color: cardBackground,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: comp.finalStatus == ItemStatus.fail 
-                  ? Colors.red.withOpacity(0.4) 
-                  : (comp.finalStatus == ItemStatus.attention ? Colors.amber.withOpacity(0.4) : Colors.transparent),
-              width: 1,
+              color: hasBeenAssessed
+                  ? const Color(0xFF52B788) 
+                  : (comp.isCompulsory ? AppColors.gold.withOpacity(0.8) : Colors.transparent),
+              width: comp.isCompulsory ? 1.5 : 0.5,
             ),
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Row(
                       children: [
-                        Text(comp.title, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
-                        if (comp.isRoadworthyRelevant) ...[
-                          const SizedBox(width: 6),
-                          const Icon(Icons.gavel, color: Colors.red, size: 13),
-                        ]
+                        if (comp.isCompulsory) ...[
+                          const Icon(Icons.gavel_rounded, color: Colors.red, size: 14),
+                          const SizedBox(width: 8),
+                        ],
+                        Expanded(
+                          child: Text(
+                            comp.title,
+                            style: const TextStyle(color: AppColors.textPrimary, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ),
                       ],
                     ),
                   ),
+                  
+                  // 🎯 DUAL OPTION WORKFLOW: Stripped down strictly to PASS or FAIL
                   Row(
-                    children: [ItemStatus.pass, ItemStatus.attention, ItemStatus.fail, ItemStatus.na].map((st) {
-                      bool isSel = comp.isNotApplicable ? (st == ItemStatus.na) : (comp.photoTargets.first.status == st && !comp.isNotApplicable);
-                      Color btnColor = st == ItemStatus.pass ? Colors.green : (st == ItemStatus.attention ? Colors.amber : (st == ItemStatus.fail ? Colors.red : Colors.grey));
+                    children: [ItemStatus.pass, ItemStatus.fail, ItemStatus.na].map((st) {
+                      // Hide N/A completely on mandatory rows to keep layout bulletproof
+                      if (comp.isCompulsory && st == ItemStatus.na) return const SizedBox.shrink();
                       
+                      bool isSel = comp.isNotApplicable ? (st == ItemStatus.na) : (comp.photoTargets.first.status == st && !comp.isNotApplicable);
+                      Color btnColor = st == ItemStatus.pass ? Colors.green : (st == ItemStatus.fail ? Colors.red : Colors.grey);
+
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 2),
                         child: InkWell(
@@ -107,13 +118,16 @@ class _DriveSystemListContainerState extends State<_DriveSystemListContainer> {
                             widget.provider.notifyListeners();
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: isSel ? btnColor.withOpacity(0.25) : Colors.transparent,
+                              color: isSel ? btnColor.withOpacity(0.2) : Colors.transparent,
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: isSel ? btnColor : AppColors.textSecondary.withOpacity(0.2), width: 1),
+                              border: Border.all(color: isSel ? btnColor : AppColors.border, width: 1),
                             ),
-                            child: Text(st == ItemStatus.na ? 'N/A' : st.name.toUpperCase(), style: TextStyle(color: isSel ? btnColor : AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
+                            child: Text(
+                              st == ItemStatus.na ? 'N/A' : st.name.toUpperCase(),
+                              style: TextStyle(color: isSel ? btnColor : AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
                       );
@@ -121,59 +135,48 @@ class _DriveSystemListContainerState extends State<_DriveSystemListContainer> {
                   ),
                 ],
               ),
-              if (!comp.isNotApplicable) ...[
-                ...comp.photoTargets.map((target) {
-                  // Fleet mode clears required base images to speed up checks
-                  bool needsPhoto = (comp.id == 'underbody' || comp.id == 'susp_rack_ends' || comp.id == 'shocks') && widget.provider.activeType != InspectionType.fleet;
-                  bool showCommentBox = (target.status == ItemStatus.attention || target.status == ItemStatus.fail);
-                  
-                  if (!needsPhoto && !showCommentBox) return const SizedBox.shrink();
 
+              if (!comp.isNotApplicable && comp.photoTargets.first.status == ItemStatus.fail) ...[
+                ...comp.photoTargets.map((target) {
                   return Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(
                       children: [
-                        if (needsPhoto) ...[
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(target.photoPath == null ? Icons.camera_alt : Icons.check_circle, color: target.photoPath == null ? AppColors.gold : Colors.green, size: 18),
-                                onPressed: () => _capturePhoto(target),
-                              ),
-                              Expanded(
-                                child: Text(target.label, style: const TextStyle(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic)),
-                              ),
-                              const SizedBox(width: 8),
-                              if (target.photoPath != null && !kIsWeb)
-                                ClipRRect(borderRadius: BorderRadius.circular(4), child: Image.file(File(target.photoPath!), width: 40, height: 30, fit: BoxFit.cover)),
-                            ],
-                          ),
-                        ],
-                        if (showCommentBox)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4, left: 6),
-                            child: SizedBox(
-                              height: 32,
-                              child: TextFormField(
-                                initialValue: target.notes,
-                                style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
-                                onChanged: (v) {
-                                  target.notes = v;
-                                  widget.provider.notifyListeners();
-                                },
-                                decoration: InputDecoration(
-                                  hintText: 'Notes required: Explain defect status...',
-                                  hintStyle: const TextStyle(color: Colors.red, fontSize: 11, fontStyle: FontStyle.italic),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                  fillColor: AppColors.background,
-                                  filled: true,
-                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.gold, width: 0.5)),
-                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.gold, width: 1)),
-                                ),
+                        IconButton(
+                          icon: Icon(target.photoPath == null ? Icons.camera_alt_outlined : Icons.check_circle, color: target.photoPath == null ? AppColors.gold : Colors.green, size: 16),
+                          onPressed: () => _capturePhoto(target),
+                          constraints: const BoxConstraints(),
+                          padding: const EdgeInsets.all(4),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(target.label, style: const TextStyle(color: AppColors.gold, fontSize: 10, fontStyle: FontStyle.italic)),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 2,
+                          child: SizedBox(
+                            height: 30,
+                            child: TextFormField(
+                              initialValue: target.notes,
+                              style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
+                              onChanged: (v) {
+                                target.notes = v;
+                                widget.provider.notifyListeners();
+                              },
+                              // 📝 CRITICAL FIX: Failure nodes force validation notes before moving on
+                              decoration: InputDecoration(
+                                hintText: 'Notes required: Explain defect...',
+                                hintStyle: const TextStyle(color: Colors.redAccent, fontSize: 10, fontStyle: FontStyle.italic),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                                fillColor: AppColors.background,
+                                filled: true,
+                                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: Colors.redAccent, width: 0.5)),
+                                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: AppColors.gold, width: 1)),
                               ),
                             ),
                           ),
+                        ),
                       ],
                     ),
                   );
