@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:printing/printing.dart';
 
 import '../../../theme/app_colors.dart';
-import '../../../core/PDF/pdf_service.dart';
+import '../../../core/PDF/multipoint_pdf_service.dart';
 import '../providers/inspection_provider.dart';
 import '../models/inspection_models.dart';
 import '../widgets/vehicle_details_section.dart';
@@ -12,14 +12,14 @@ import '../widgets/drive_system_section.dart';
 import '../widgets/wheels_tyres_section.dart';
 import '../widgets/summary_section.dart';
 
-class InspectionFlowScreen extends StatefulWidget {
-  const InspectionFlowScreen({super.key});
+class MultipointFlowScreen extends StatefulWidget {
+  const MultipointFlowScreen({super.key});
 
   @override
-  State<InspectionFlowScreen> createState() => _InspectionFlowScreenState();
+  State<MultipointFlowScreen> createState() => _MultipointFlowScreenState();
 }
 
-class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
+class _MultipointFlowScreenState extends State<MultipointFlowScreen> {
   int currentStep = 0;
   final ScrollController _scrollController = ScrollController();
 
@@ -40,6 +40,12 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
     '13 STRUCTURAL DAMAGE',
     'Summary',
   ];
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _showPostDownloadPopup(ActiveInspectionProvider state) {
     TextEditingController emailCtrl = TextEditingController(
@@ -66,7 +72,7 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'The PDF has been successfully generated.',
+                  'The Multipoint PDF has been successfully generated.',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
@@ -138,7 +144,6 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
     );
   }
 
-  // 🌟 PERFECTED INTERACTIVE PIPELINE DIALOG
   void _showLoadingAndRatingDialog(ActiveInspectionProvider state) {
     int rating = 0;
     bool isGenerating = true;
@@ -151,7 +156,6 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
       builder:
           (ctx) => StatefulBuilder(
             builder: (context, setDialogState) {
-              // 🚀 PHASED DISPATCHER: Yields isolates dynamically so the progress indicators turn smoothly
               if (pdfData == null &&
                   isGenerating &&
                   pipelinePhase == 'Initializing Secure Manifest...') {
@@ -161,7 +165,7 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
                   setDialogState(
                     () =>
                         pipelinePhase =
-                            'Synchronizing Audit Manifest Fields...',
+                            'Synchronizing Audit Manifest Fields... ',
                   );
 
                   await Future.delayed(const Duration(milliseconds: 600));
@@ -169,16 +173,17 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
                   setDialogState(
                     () =>
                         pipelinePhase =
-                            'Compiling High-Resolution Vector Assets...',
+                            'Compiling High-Resolution Vector Assets... ',
                   );
 
-                  // Run document layout processing block
-                  final bytes = await PDFService.generatePdfBytes(state);
+                  final bytes = await MultipointPDFService.generatePdfBytes(
+                    state,
+                  );
 
                   if (!mounted) return;
                   setDialogState(
                     () =>
-                        pipelinePhase = 'Finalizing System Integrity Check...',
+                        pipelinePhase = 'Finalizing System Integrity Check... ',
                   );
                   await Future.delayed(const Duration(milliseconds: 500));
 
@@ -278,11 +283,6 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
                                     _showPostDownloadPopup(state);
                                   }
                                   : null,
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
                           child: const Text(
                             'SUBMIT & DOWNLOAD REPORT',
                             style: TextStyle(
@@ -319,7 +319,9 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
       if (missingReason) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('⚠️ Please provide a reason for all FAILED items.'),
+            content: Text(
+              'âš ï¸  Please provide a reason for all FAILED items.',
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -334,15 +336,6 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
       });
     } else {
       _showLoadingAndRatingDialog(inspectionState);
-    }
-  }
-
-  void previousStep() {
-    if (currentStep > 0) {
-      setState(() {
-        currentStep--;
-        _scrollController.jumpTo(0);
-      });
     }
   }
 
@@ -482,7 +475,11 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
                     width: useCompactPadding ? 100 : 150,
                     height: 50,
                     child: OutlinedButton(
-                      onPressed: previousStep,
+                      onPressed:
+                          () => setState(() {
+                            currentStep--;
+                            _scrollController.jumpTo(0);
+                          }),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(
                           color: AppColors.gold,

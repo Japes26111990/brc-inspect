@@ -5,7 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../modules/inspection/providers/inspection_provider.dart';
 import '../../modules/inspection/models/inspection_models.dart';
 
-class PDFService {
+class MultipointPDFService {
   static Future<Uint8List> generatePdfBytes(
     ActiveInspectionProvider provider,
   ) async {
@@ -59,7 +59,6 @@ class PDFService {
           return pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              // ================= LEFT MASTER BLOCK (40%) =================
               pw.Expanded(
                 flex: 2,
                 child: pw.Column(
@@ -68,7 +67,6 @@ class PDFService {
                       child: pw.Row(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          // Column 1
                           pw.Expanded(
                             child: pw.Column(
                               children: [
@@ -102,7 +100,6 @@ class PDFService {
                             ),
                           ),
                           pw.SizedBox(width: 4),
-                          // Column 2
                           pw.Expanded(
                             child: pw.Column(
                               children: [
@@ -138,7 +135,6 @@ class PDFService {
                       ),
                     ),
                     pw.SizedBox(height: 3),
-                    // Bottom Left Signatures
                     pw.Container(
                       height: 70,
                       child: pw.Row(
@@ -153,14 +149,11 @@ class PDFService {
                 ),
               ),
               pw.SizedBox(width: 4),
-
-              // ================= RIGHT MASTER BLOCK (60%) =================
               pw.Expanded(
                 flex: 3,
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    // TOP BAR
                     pw.Row(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
@@ -232,7 +225,6 @@ class PDFService {
                           ),
                         ),
                         pw.SizedBox(width: 4),
-                        // AA LOGO BLOCK
                         pw.Expanded(
                           flex: 1,
                           child: pw.Container(
@@ -260,8 +252,6 @@ class PDFService {
                       ],
                     ),
                     pw.SizedBox(height: 3),
-
-                    // MIDDLE GRID
                     pw.Expanded(
                       child: pw.Row(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -352,9 +342,7 @@ class PDFService {
                         ],
                       ),
                     ),
-                    pw.SizedBox(height: 4),
-
-                    // BOTTOM REMARKS BLOCK
+                    pw.SizedBox(height: 3),
                     pw.Container(
                       height: 70,
                       decoration: pw.BoxDecoration(
@@ -458,7 +446,6 @@ class PDFService {
     return await pdf.save();
   }
 
-  // 🌟 FIXED: Renders live data parameters on top of row underlines
   static pw.Widget _buildExaminerBlock(Map<String, String> d) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(4),

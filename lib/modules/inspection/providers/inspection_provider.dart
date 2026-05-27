@@ -7,7 +7,7 @@ class ActiveInspectionProvider extends ChangeNotifier {
   InspectionType activeType = InspectionType.multipointCheck;
 
   final Map<String, String> vehicleDetails = {
-    'Form Ref No': '0803',
+    'Form Ref No': '00352',
     'Client Name': '',
     'Client Cell': '',
     'Client Email': '',
@@ -23,6 +23,7 @@ class ActiveInspectionProvider extends ChangeNotifier {
     'Examiner Name': 'Tommy',
     'Examiner Number': 'EX-8842',
     'Remarks': '',
+    'Certificate No': '353/1',
   };
 
   final Map<String, bool> scannedFieldsRegistry = {
@@ -35,38 +36,226 @@ class ActiveInspectionProvider extends ChangeNotifier {
   };
 
   Map<String, List<ComponentResult>> sections = {};
-  List<TyreResult> tyres = [];
 
   ActiveInspectionProvider() {
-    _initializeMultipointCheckMatrix();
-  }
-
-  // 🌟 NEW: Purges data cleanly when starting a brand new cycle
-  void resetInspection() {
-    vehicleDetails.forEach((key, value) {
-      if (key == 'Form Ref No') {
-        vehicleDetails[key] = '0803';
-      } else if (key == 'Examiner Name') {
-        vehicleDetails[key] = 'Tommy';
-      } else if (key == 'Examiner Number') {
-        vehicleDetails[key] = 'EX-8842';
-      } else {
-        vehicleDetails[key] = '';
-      }
-    });
-
-    scannedFieldsRegistry.updateAll((key, value) => false);
-    _initializeMultipointCheckMatrix();
-    notifyListeners();
+    initializeInspectionMatrix();
   }
 
   void setInspectionType(InspectionType type) {
     activeType = type;
+    initializeInspectionMatrix();
     notifyListeners();
   }
 
-  void recalculateDynamicComponentBudgets() {
-    notifyListeners();
+  void initializeInspectionMatrix() {
+    if (activeType == InspectionType.technicalReport) {
+      _initializeFullTechnicalMatrix();
+    } else {
+      _initializeMultipointCheckMatrix();
+    }
+  }
+
+  void _initializeFullTechnicalMatrix() {
+    sections = {
+      '2. ENGINE DIAGNOSTICS': _buildItems([
+        'Timing',
+        'Dwell',
+        'Spark plugs',
+        'Power balance cylinders',
+        'Air cleaner element',
+        'Oil level',
+        'Noises',
+        'Engine compartment',
+        'Air leaks on manifold/carburetor',
+        'Spark plug leads',
+        'Fumes',
+        'Smoking',
+        'Idle mixture',
+        'Mixture at high speed',
+        'Idling',
+        'Positive crankcase valve',
+        'Cranking speed',
+        'Vacuum advance',
+        'Centrifugal advance',
+      ], scale: EvaluationScale.severity), // <-- Flagged as Severity Metric
+      '3. COOLING SYSTEM': _buildItems([
+        'Pressure test',
+        'Caps',
+        'Hoses',
+        'Belts',
+        'Fan',
+        'Expansion bottle',
+        'Radiator',
+        'Waterpump',
+        'Visual / Anti-freeze',
+        'Fluid leaks',
+      ]),
+      '4. ROAD TEST PERFORMANCE': _buildItems([
+        'Engine Performance: Noise level',
+        'Engine Performance: Vibrations',
+        'Engine Performance: Smoking',
+        'Engine Performance: Fumes',
+        'Engine Performance: Cruise control',
+        'Engine Performance: Performance',
+        'Engine Performance: Idling',
+        'Transmission: Noise level',
+        'Transmission: Vibrations',
+        'Transmission: Performance',
+        'Transmission: Gearshift',
+        'Brake Test: L/F',
+        'Brake Test: R/F',
+        'Brake Test: L/R',
+        'Brake Test: R/R',
+        'Brake Test: H/B',
+        'Clutch: Noise level',
+        'Clutch: Performance',
+        'Clutch: Shudder',
+        'Driveline: Noise level',
+        'Driveline: Vibrations',
+        'Driveline: Torque',
+        'Differential: Noise level',
+        'Differential: Performance',
+      ]),
+      '5. INSTRUMENTATION & ACCESSORIES': _buildItems([
+        'Steering wheel',
+        'Speedometer',
+        'Fuel gauge',
+        'Rev counter',
+        'Wiper switch',
+        'Indicator switch',
+        'Headlight switch',
+        'Cruise control switch',
+        'Cigarette lighter',
+        'Radio',
+        'Ashtray',
+        'Air vents',
+        'Centre air vents',
+        'Heater controls',
+        'Glove compartment',
+      ]),
+      '6. ELECTRICAL ANALYSIS': _buildItems([
+        'Battery: State of charge',
+        'Battery: Battery load test',
+        'Battery: Visual',
+        'Charging System: Charging rate',
+        'Charging System: Noise',
+        'Charging System: Visual',
+        'Charging System: Belt',
+        'Starter: Performance',
+        'Starter: Noise',
+        'Wiring & connections',
+        'Fuses & fuse box',
+      ]),
+      '7. LIGHTING SYSTEMS': _buildItems([
+        'Interior Lights',
+        'Headlights',
+        'Hazard',
+        'Indicators',
+        'Reverse',
+        'Headlight adjustments',
+        'Brakes',
+        'Instrumentation',
+        'Park / Tail',
+        'No plate',
+        'Fog lights & Spot lights',
+      ]),
+      '8. INTERIOR & EXTERIOR TRIM': _buildItems([
+        'Hoodlining',
+        'Sun visors',
+        'Seats',
+        'Floor mats',
+        'Panels',
+        'Seat belts',
+        'Door locks',
+        'Window mechanisms',
+        'Interior mirror',
+        'Glove compartment',
+        'Dash',
+        'Lenses',
+        'Pillars',
+        'Electric mirrors',
+        'Reflectors',
+        'Channels',
+        'Sealing rubbers',
+        'Glass',
+        'Number plates',
+        'Sun roof',
+        'Exterior mirror',
+      ]),
+      '9. STEERING & UNDER-BRAKES': _buildItems([
+        'Brakes: Linings / pads',
+        'Brakes: Drum / disk',
+        'Brakes: Wheel cylinder / calipers',
+        'Brakes: Master cylinder',
+        'Brakes: Brake hoses',
+        'Brakes: Brake fluid / Leaks',
+        'Brakes: Brake booster',
+        'Brakes: Brake test',
+        'Brakes: Handbrake',
+        'Steering: Steering box',
+        'Steering: Pitman',
+        'Steering: Tie-rod ends',
+        'Steering: Drag link',
+        'Steering: Steering shaft',
+        'Steering: Idler arm',
+        'Steering: Steering rack',
+        'Steering: Steering coupling',
+        'Steering: Steering rackboots',
+        'Steering: Power steering',
+        'Steering: Fluid leaks',
+      ]),
+      '10. WHEELS & TYRES DIAGNOSTICS': _buildItems([
+        'Wheels: Run out',
+        'Wheels: Bearings',
+        'Wheels: Rim',
+        'Wheels: Bolts & nuts (visual)',
+        'Alignment: Toe in / Toe out',
+        'Alignment: Camber',
+        'Alignment: Caster',
+        'Tyres: Make',
+        'Tyres: Casing',
+        'Tyres: Tread Depth',
+        'Tyres: Size',
+        'Tyres: Type',
+      ]),
+      '11. UNDERCARRIAGE SYSTEM': _buildItems([
+        'Chassis: Frame / Chassis',
+        'Chassis: Cross member',
+        'Chassis: Sub frame',
+        'Chassis: Wheel base',
+        'Chassis: Diagonal measurement',
+        'Chassis: All rubber mountings',
+        'Chassis: Jacking points',
+        'Chassis: Fluid leaks under car',
+        'Suspension: Springs',
+        'Suspension: Shackles',
+        'Suspension: Trailing arms',
+        'Suspension: Torsion bars',
+        'Suspension: Wishbones & Pivots',
+        'Suspension: Control arms',
+        'Suspension: Swivel joints',
+        'Suspension: Radius rods',
+        'Suspension: Stabiliser bars',
+        'Suspension: Axles',
+        'Suspension: Shocks',
+        'Suspension: Hydraulic systems',
+      ]),
+      '12. FUEL & EXHAUST CRADLE': _buildItems([
+        'Fuel System: Fuel tank',
+        'Fuel System: Lines',
+        'Fuel System: Fuel leaks',
+        'Drive Shaft: Propeller / drive shaft',
+        'Drive Shaft: Universal joints',
+        'Drive Shaft: CV Joints',
+        'Drive Shaft: Rubber boots',
+        'Drive Shaft: Prop centre bearing',
+        'Exhaust: Silencer(s)',
+        'Exhaust: Pipes / flanges / joints',
+        'Exhaust: Fluid leaks',
+        'Ride Height: Front',
+        'Ride Height: Rear',
+      ]),
+    };
   }
 
   void _initializeMultipointCheckMatrix() {
@@ -216,11 +405,12 @@ class ActiveInspectionProvider extends ChangeNotifier {
         'PREVIOUS REPAIRS',
       ]),
     };
-
-    tyres = [];
   }
 
-  List<ComponentResult> _buildItems(List<String> titles) {
+  List<ComponentResult> _buildItems(
+    List<String> titles, {
+    EvaluationScale scale = EvaluationScale.binary,
+  }) {
     return titles
         .map(
           (t) => ComponentResult(
@@ -228,6 +418,7 @@ class ActiveInspectionProvider extends ChangeNotifier {
             title: t,
             isRoadworthyRelevant: true,
             isCompulsory: true,
+            scale: scale,
             photoTargets: [
               SubPhotoTarget(id: '${t}_t', label: 'Check/Note for $t'),
             ],
@@ -236,17 +427,21 @@ class ActiveInspectionProvider extends ChangeNotifier {
         .toList();
   }
 
-  bool get passesRoadworthy {
-    for (var sectionList in sections.values) {
-      for (var component in sectionList) {
-        if (!component.isNotApplicable &&
-            component.photoTargets.first.status == ItemStatus.fail) {
-          return false;
-        }
+  void resetInspection() {
+    vehicleDetails.forEach((key, value) {
+      if (key == 'Form Ref No') {
+        vehicleDetails[key] = '00352';
+      } else if (key == 'Examiner Name') {
+        vehicleDetails[key] = 'Tommy';
+      } else if (key == 'Examiner Number') {
+        vehicleDetails[key] = 'EX-8842';
+      } else if (key == 'Certificate No') {
+        vehicleDetails[key] = '353/1';
+      } else {
+        vehicleDetails[key] = '';
       }
-    }
-    return true;
+    });
+    initializeInspectionMatrix();
+    notifyListeners();
   }
-
-  bool isSectionComplete(String sectionName) => true;
 }

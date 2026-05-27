@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../../theme/app_colors.dart';
 import '../providers/inspection_provider.dart';
-import 'inspection_flow_screen.dart';
+import 'multipoint_flow_screen.dart';
+import 'technical_flow_screen.dart';
 
 class InspectionTypeScreen extends StatelessWidget {
   const InspectionTypeScreen({super.key});
@@ -36,30 +37,16 @@ class InspectionTypeScreen extends StatelessWidget {
                 subtitle: '40-point visual and safety check',
                 icon: Icons.assignment_outlined,
                 onTap: () {
-                  // 🌟 PURGES PREVIOUS MANIFEST ARTIFACTS IN REAL-TIME
                   provider.resetInspection();
                   provider.setInspectionType(InspectionType.multipointCheck);
-
                   showDialog(
                     context: context,
                     barrierDismissible: false,
-                    builder: (_) => _ClientIntakeDialog(provider: provider),
-                  );
-                },
-              ),
-              const SizedBox(height: 22),
-              InspectionTypeButton(
-                title: 'Condition Report',
-                subtitle: 'Detailed vehicle condition assessment',
-                icon: Icons.verified_outlined,
-                onTap: () {
-                  provider.resetInspection();
-                  provider.setInspectionType(InspectionType.conditionReport);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const InspectionFlowScreen(),
-                    ),
+                    builder:
+                        (_) => _ClientIntakeDialog(
+                          provider: provider,
+                          targetScreen: const MultipointFlowScreen(),
+                        ),
                   );
                 },
               ),
@@ -71,11 +58,14 @@ class InspectionTypeScreen extends StatelessWidget {
                 onTap: () {
                   provider.resetInspection();
                   provider.setInspectionType(InspectionType.technicalReport);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const InspectionFlowScreen(),
-                    ),
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder:
+                        (_) => _ClientIntakeDialog(
+                          provider: provider,
+                          targetScreen: const TechnicalFlowScreen(),
+                        ),
                   );
                 },
               ),
@@ -89,7 +79,11 @@ class InspectionTypeScreen extends StatelessWidget {
 
 class _ClientIntakeDialog extends StatefulWidget {
   final ActiveInspectionProvider provider;
-  const _ClientIntakeDialog({required this.provider});
+  final Widget targetScreen;
+  const _ClientIntakeDialog({
+    required this.provider,
+    required this.targetScreen,
+  });
 
   @override
   State<_ClientIntakeDialog> createState() => _ClientIntakeDialogState();
@@ -109,27 +103,21 @@ class _ClientIntakeDialogState extends State<_ClientIntakeDialog> {
     final cell = _cellCtrl.text.trim();
     final email = _emailCtrl.text.trim();
 
-    // 🛑 VALIDATION BLOCK: Name and Surname must be entered
     if (name.isEmpty || surname.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            '⚠️ Both First Name and Surname fields are mandatory.',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          content: Text('⚠️ Both First Name and Surname fields are mandatory.'),
           backgroundColor: AppColors.error,
         ),
       );
       return;
     }
 
-    // 🛑 VALIDATION BLOCK: Enforce at least one contact method (Cell or Email)
     if (cell.isEmpty && email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             '⚠️ Please provide a Cell Number or Email Address to proceed.',
-            style: TextStyle(fontWeight: FontWeight.bold),
           ),
           backgroundColor: AppColors.error,
         ),
@@ -229,7 +217,6 @@ class _ClientIntakeDialogState extends State<_ClientIntakeDialog> {
             style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 24),
-
           Row(
             children: [
               Expanded(
@@ -259,7 +246,6 @@ class _ClientIntakeDialogState extends State<_ClientIntakeDialog> {
           const SizedBox(height: 16),
           _buildInput('Email Address', Icons.email_outlined, _emailCtrl),
           const SizedBox(height: 32),
-
           SizedBox(
             width: double.infinity,
             height: 55,
@@ -339,7 +325,6 @@ class _ClientIntakeDialogState extends State<_ClientIntakeDialog> {
             ),
           ),
           const SizedBox(height: 32),
-
           SizedBox(
             width: double.infinity,
             height: 60,
@@ -348,9 +333,7 @@ class _ClientIntakeDialogState extends State<_ClientIntakeDialog> {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const InspectionFlowScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => widget.targetScreen),
                 );
               },
               icon: const Icon(Icons.qr_code_scanner, size: 28),
@@ -403,7 +386,6 @@ class InspectionTypeButton extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final VoidCallback onTap;
-
   const InspectionTypeButton({
     super.key,
     required this.title,

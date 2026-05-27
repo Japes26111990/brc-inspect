@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/app_colors.dart';
 import '../../inspection/providers/inspection_provider.dart';
-import '../../inspection/screens/inspection_flow_screen.dart';
+import '../../inspection/screens/multipoint_flow_screen.dart';
+import '../../inspection/screens/technical_flow_screen.dart';
 
 class SavedReportsScreen extends StatelessWidget {
   const SavedReportsScreen({super.key});
@@ -110,9 +111,16 @@ class SavedReportsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: () {
           provider.setInspectionType(item['type']);
+
+          // 🌟 DYNAMIC ROUTING ENGINE MATCHES SYSTEM SPLIT TYPE
+          Widget targetScreen = const MultipointFlowScreen();
+          if (item['type'] == InspectionType.technicalReport) {
+            targetScreen = const TechnicalFlowScreen();
+          }
+
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const InspectionFlowScreen()),
+            MaterialPageRoute(builder: (_) => targetScreen),
           );
         },
         child: Padding(

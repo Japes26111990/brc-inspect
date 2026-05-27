@@ -108,7 +108,7 @@ class _DriveSystemListContainerState extends State<_DriveSystemListContainer> {
                         [ItemStatus.pass, ItemStatus.fail, ItemStatus.na].map((
                           st,
                         ) {
-                          // 🌟 FIXED: N/A is now ALWAYS visible for every item, regardless of compulsory status!
+                          // ðŸŒŸ FIXED: N/A is now ALWAYS visible for every item, regardless of compulsory status!
 
                           bool isSel =
                               comp.isNotApplicable
@@ -174,7 +174,7 @@ class _DriveSystemListContainerState extends State<_DriveSystemListContainer> {
                 ],
               ),
 
-              // 🌟 FORCED NOTES ON FAIL (Camera Removed completely)
+              // ðŸŒŸ FORCED NOTES ON FAIL (Camera Removed completely)
               if (!comp.isNotApplicable &&
                   comp.photoTargets.first.status == ItemStatus.fail) ...[
                 Padding(
