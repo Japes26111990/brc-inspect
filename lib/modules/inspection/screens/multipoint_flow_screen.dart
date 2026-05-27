@@ -147,7 +147,6 @@ class _MultipointFlowScreenState extends State<MultipointFlowScreen> {
   void _showLoadingAndRatingDialog(ActiveInspectionProvider state) {
     int rating = 0;
     bool isGenerating = true;
-    String pipelinePhase = 'Initializing Secure Manifest...';
     Uint8List? pdfData;
 
     showDialog(
@@ -156,36 +155,16 @@ class _MultipointFlowScreenState extends State<MultipointFlowScreen> {
       builder:
           (ctx) => StatefulBuilder(
             builder: (context, setDialogState) {
-              if (pdfData == null &&
-                  isGenerating &&
-                  pipelinePhase == 'Initializing Secure Manifest...') {
+              // Only run the generation once
+              if (pdfData == null && isGenerating) {
                 Future(() async {
-                  await Future.delayed(const Duration(milliseconds: 600));
-                  if (!mounted) return;
-                  setDialogState(
-                    () =>
-                        pipelinePhase =
-                            'Synchronizing Audit Manifest Fields... ',
-                  );
+                  // Give the UI 50 milliseconds to render the loading spinner before the heavy PDF math starts
+                  await Future.delayed(const Duration(milliseconds: 50));
 
-                  await Future.delayed(const Duration(milliseconds: 600));
-                  if (!mounted) return;
-                  setDialogState(
-                    () =>
-                        pipelinePhase =
-                            'Compiling High-Resolution Vector Assets... ',
-                  );
-
+                  // Generate immediately - No more fake pipeline delays!
                   final bytes = await MultipointPDFService.generatePdfBytes(
                     state,
                   );
-
-                  if (!mounted) return;
-                  setDialogState(
-                    () =>
-                        pipelinePhase = 'Finalizing System Integrity Check... ',
-                  );
-                  await Future.delayed(const Duration(milliseconds: 500));
 
                   if (!mounted) return;
                   setDialogState(() {
@@ -212,10 +191,10 @@ class _MultipointFlowScreenState extends State<MultipointFlowScreen> {
                           strokeWidth: 3.5,
                         ),
                         const SizedBox(height: 20),
-                        Text(
-                          pipelinePhase,
+                        const Text(
+                          'Generating PDF Document...',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -229,7 +208,7 @@ class _MultipointFlowScreenState extends State<MultipointFlowScreen> {
                         ),
                         const SizedBox(height: 14),
                         const Text(
-                          'Document Manifest Ready',
+                          'Document Ready',
                           style: TextStyle(
                             color: AppColors.primary,
                             fontSize: 16,
@@ -319,9 +298,7 @@ class _MultipointFlowScreenState extends State<MultipointFlowScreen> {
       if (missingReason) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'âš ï¸  Please provide a reason for all FAILED items.',
-            ),
+            content: Text('⚠️ Please provide a reason for all FAILED items.'),
             backgroundColor: AppColors.error,
           ),
         );
