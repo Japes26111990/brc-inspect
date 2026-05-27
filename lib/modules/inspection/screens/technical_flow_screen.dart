@@ -9,7 +9,6 @@ import '../providers/inspection_provider.dart';
 import '../models/inspection_models.dart';
 import '../widgets/vehicle_details_section.dart';
 import '../widgets/summary_section.dart';
-import '../widgets/inspection_item_card.dart';
 
 class TechnicalFlowScreen extends StatefulWidget {
   const TechnicalFlowScreen({super.key});
@@ -38,16 +37,11 @@ class _TechnicalFlowScreenState extends State<TechnicalFlowScreen> {
     'Summary',
   ];
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
   void _showPostDownloadPopup(ActiveInspectionProvider state) {
     TextEditingController emailCtrl = TextEditingController(
       text: state.vehicleDetails['Client Email'] ?? '',
     );
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -277,6 +271,7 @@ class _TechnicalFlowScreenState extends State<TechnicalFlowScreen> {
     );
   }
 
+  // ðŸŒŸ NATIVE CHECKLIST BUILDER REMOVES BLANK SURFACE FREEZES
   Widget _buildTechnicalChecklist(
     ActiveInspectionProvider state,
     String sectionName,
@@ -289,19 +284,168 @@ class _TechnicalFlowScreenState extends State<TechnicalFlowScreen> {
       itemCount: items.length,
       itemBuilder: (context, index) {
         final comp = items[index];
-        final isWeightMetric =
-            comp.title.toLowerCase().contains('kg') ||
-            comp.title.toLowerCase().contains('mass');
+        bool hasBeenAssessed =
+            comp.isNotApplicable ||
+            comp.photoTargets.first.status != ItemStatus.na;
 
-        return InspectionItemCard(
-          key: ValueKey('$sectionName-${comp.id}'),
-          comp: comp,
-          provider: state,
-          showValueInput: true,
-          valueInputHint:
-              isWeightMetric
-                  ? 'Enter metric details (kg)...'
-                  : 'Enter diagnostic evaluation measurements (mm/force)...',
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color:
+                hasBeenAssessed
+                    ? AppColors.accent.withOpacity(0.05)
+                    : AppColors.card,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: hasBeenAssessed ? AppColors.gold : AppColors.border,
+              width: hasBeenAssessed ? 1.5 : 0.5,
+            ),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      comp.title,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children:
+                        [ItemStatus.pass, ItemStatus.fail, ItemStatus.na].map((
+                          st,
+                        ) {
+                          bool isSel =
+                              comp.isNotApplicable
+                                  ? (st == ItemStatus.na)
+                                  : (comp.photoTargets.first.status == st &&
+                                      !comp.isNotApplicable);
+                          Color btnColor =
+                              st == ItemStatus.pass
+                                  ? Colors.green
+                                  : (st == ItemStatus.fail
+                                      ? Colors.red
+                                      : Colors.grey);
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (st == ItemStatus.na)
+                                    comp.isNotApplicable = true;
+                                  else {
+                                    comp.isNotApplicable = false;
+                                    comp.photoTargets.first.status = st;
+                                  }
+                                });
+                                state.notifyListeners();
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      isSel
+                                          ? btnColor.withOpacity(0.15)
+                                          : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: isSel ? btnColor : AppColors.border,
+                                  ),
+                                ),
+                                child: Text(
+                                  st == ItemStatus.na
+                                      ? 'N/A'
+                                      : st.name.toUpperCase(),
+                                  style: TextStyle(
+                                    color:
+                                        isSel
+                                            ? btnColor
+                                            : AppColors.textSecondary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 38,
+                child: TextFormField(
+                  initialValue: state.vehicleDetails[comp.title] ?? '',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                  ),
+                  onChanged: (v) {
+                    state.vehicleDetails[comp.title] = v;
+                    state.notifyListeners();
+                  },
+                  decoration: InputDecoration(
+                    hintText:
+                        comp.title.toLowerCase().contains('kg') ||
+                                comp.title.toLowerCase().contains('mass')
+                            ? 'Enter metric details (kg)...'
+                            : 'Enter diagnostic evaluation measurements (mm/force)...',
+                    fillColor: AppColors.background,
+                    filled: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.gold),
+                    ),
+                  ),
+                ),
+              ),
+              if (!comp.isNotApplicable &&
+                  comp.photoTargets.first.status == ItemStatus.fail)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: TextFormField(
+                    initialValue: comp.photoTargets.first.notes,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 12,
+                    ),
+                    onChanged: (v) {
+                      comp.photoTargets.first.notes = v;
+                      state.notifyListeners();
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'MANDATORY DEFECT SPECIFICS REASON REQUIRED...',
+                      hintStyle: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      fillColor: AppColors.background,
+                      filled: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(color: Colors.redAccent),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         );
       },
     );

@@ -158,10 +158,10 @@ class _MultipointFlowScreenState extends State<MultipointFlowScreen> {
               // Only run the generation once
               if (pdfData == null && isGenerating) {
                 Future(() async {
-                  // Give the UI 50 milliseconds to render the loading spinner before the heavy PDF math starts
-                  await Future.delayed(const Duration(milliseconds: 50));
+                  // ⏳ THE FIX: Give the UI 300 milliseconds to render the dialog
+                  // and get the spinner animating smoothly before slamming the processor.
+                  await Future.delayed(const Duration(milliseconds: 300));
 
-                  // Generate immediately - No more fake pipeline delays!
                   final bytes = await MultipointPDFService.generatePdfBytes(
                     state,
                   );
